@@ -32,3 +32,10 @@ A ligação MT5 é opcional e requer Windows, terminal aberto e pacote MetaTrade
 Backtests podem omitir spread variável, slippage, comissões, swap, gaps, execução parcial e conversão de moedas. Os dados e resultados de exemplo não representam desempenho. Validar em histórico fora da amostra, comparar com baseline OHLC, testar conta demo e colocar limites de paragem antes de sequer considerar qualquer execução.
 
 Análise das referências, licenças e razão de separar MT5, grid e opções em [REFERENCIAS.md](REFERENCIAS.md).
+
+
+## Envio manual MT5 — avançado
+
+O script `mt5_manual_execution.py` aceita apenas ordem market indicada pelo utilizador, com SL/TP obrigatórios, valida símbolo, spread, posição duplicada, volume e perda estimada pelo terminal. Faz `order_check` e envia uma vez, sem repetição automática. A IA e o detector visual não o chamam. Começa exclusivamente com a conta DEMO da XM.
+
+Conta REAL fica bloqueada por padrão. O código exige opt-in `NEXUS_ENABLE_LIVE_TRADING=I_ACCEPT_REAL_MONEY_RISK` **e** confirmação exata escrita para cada operação; limite máximo por ordem no programa: 0,50% de equity (padrão 0,25%). Isso não torna uma estratégia segura nem constitui recomendação de negociação. O utilizador continua responsável por confirmar os detalhes e verificar o terminal. O módulo não foi testado contra broker real.
