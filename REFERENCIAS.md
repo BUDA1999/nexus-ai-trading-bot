@@ -23,3 +23,8 @@ A licença de um repositório não cobre automaticamente dependências; confirme
 - IA é uma interface de revisão explicável; o adaptador atual é local e determinístico, sem chamadas de rede ou poder de executar operações.
 - Monitorização grava eventos JSONL localmente; não guardar passwords, tokens ou IDs privados.
 - A versão atual só analisa/backtesta. Sem funções de envio de ordens.
+
+
+## IA local
+
+O Nexus tem um cliente opcional para a API local do [Ollama](https://docs.ollama.com/api/introduction). O modelo apenas comenta dados resumidos; regras determinísticas continuam responsáveis pelos filtros. A chamada usa localhost, formato JSON e falha fechada. Não colocamos credenciais nem endpoint de trading. O teste automatizado usa um transporte simulado; ainda não foi testado contra um modelo instalado.

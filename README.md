@@ -1,25 +1,34 @@
 # Nexus AI Trading Bot
 
-Protótipo de estudo modular: sinais de visão + contexto MT5, filtros de risco, backtesting offline, monitorização e módulos de pesquisa. **Não envia ordens reais e não é aconselhamento financeiro.**
+Protótipo modular de estudo para sinais visuais + contexto numérico MT5, filtros de risco, monitorização local e pesquisa de estratégias. **Não envia ordens. Não é aconselhamento financeiro.**
 
-## Módulos (ficheiros na raiz por enquanto)
-- `core.py`: EMA, ATR, validação de sinal e posição de risco.
-- `backtest.py`: simulação offline de CSV (usa `core.py`).
-- `strategies.py`: proposta sinal+tendência e níveis GRID apenas para pesquisa.
-- `ai_review.py`: revisão local, sem LLM externo nem capacidade de executar ordens.
-- `monitoring.py`: auditoria JSONL e métricas simples.
-- `mt5_readonly.py`: adaptador opcional de leitura de velas fechadas.
-- `options_research.py`: Black-Scholes educativo para opções europeias.
-- `REFERENCIAS.md`: projetos avaliados, licenças e decisões.
+## Módulos
 
-## Testar localmente
-Python 3.10+; testes principais sem dependências externas.
+- `trading_bot/core.py`: EMA, ATR, filtro direcional, stop/alvo ATR e dimensionamento com limite de risco.
+- `trading_bot/strategies.py`: interface de estratégias, filtro visão+tendência e níveis de grelha para pesquisa (não ordens).
+- `trading_bot/ai_review.py`: contrato de revisão segura, atualmente sem IA externa nem execução.
+- `trading_bot/monitoring.py`: auditoria local JSONL e resumo de resultados.
+- `trading_bot/research/options.py`: preço teórico Black-Scholes para estudo europeu, sem corretora nem ordens.
+- `trading_bot/adapters/mt5_readonly.py`: adaptador MT5 opcional, apenas leitura de candles fechados.
+- `trading_bot/backtest.py`: backtest offline com sinais/tendências fornecidos num CSV.
+
+## Plataforma
+
+Começar localmente num **PC Windows**: a integração Python oficial do MT5 depende do terminal MetaTrader 5 desktop. O scanner visual também captura a tela. Android pode ser acrescentado depois como painel de consulta/alertas; não deve executar o terminal MT5 desktop nem guardar credenciais de trading.
+
+## Testar
+
+Python 3.10+ para núcleo; nenhum pacote externo para testes do núcleo.
 
 ```bash
-python -m unittest discover -s . -p 'test_*.py' -v
-python backtest.py sample_signals.csv --balance 10000 --risk 0.005
+python -m unittest discover -s tests -v
+python -m trading_bot.backtest data/sample_signals.csv --balance 10000 --risk 0.005
 ```
 
-O CSV de exemplo é artificial e não representa desempenho real. A integração MT5 requer Windows e terminal desktop; o adaptador é somente leitura. Android pode ser um painel de consulta/alertas no futuro, mas não substitui o terminal MT5.
+A ligação MT5 é opcional e requer Windows, terminal aberto e pacote MetaTrader5 instalado; `read_closed_rates` é apenas leitura. Não há API de execução de ordens neste projeto.
 
-Backtests não incluem todos os custos nem garantem desempenho. Manter teste em histórico fora da amostra e demo; não colocar passwords/tokens no GitHub.
+## Limitações e plano seguro
+
+Backtests podem omitir spread variável, slippage, comissões, swap, gaps, execução parcial e conversão de moedas. Os dados e resultados de exemplo não representam desempenho. Validar em histórico fora da amostra, comparar com baseline OHLC, testar conta demo e colocar limites de paragem antes de sequer considerar qualquer execução.
+
+Análise das referências, licenças e razão de separar MT5, grid e opções em [REFERENCIAS.md](REFERENCIAS.md).
