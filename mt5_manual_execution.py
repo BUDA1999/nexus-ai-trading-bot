@@ -7,7 +7,7 @@ pre-trade do MT5 e limite rígido de risco. Não é aconselhamento financeiro.
 from __future__ import annotations
 import os
 from dataclasses import dataclass
-from math import floor, isfinite
+from math import isfinite
 
 LIVE_ENV = "NEXUS_ENABLE_LIVE_TRADING"
 LIVE_VALUE = "I_ACCEPT_REAL_MONEY_RISK"
@@ -140,8 +140,19 @@ def send_manual_order(mt5, order: ManualOrder, confirmation: str, *, live_opt_in
     if risk_percent > order.risk_percent_limit:
         raise ExecutionBlocked(f"Perda estimada no stop {risk_percent:.3f}% excede limite {order.risk_percent_limit:.3f}%")
 
-    # Exige suporte demonstrável do terminal; não tenta policies alternativas de forma cega.
-    filling = getattr(info, "filling_mode", None)
+    # symbol_info.filling_mode é bitmask SYMBOL_FILLING_*; não é o mesmo enum
+    # de ORDER_FILLING_*. Mapeia só modos explicitamente suportados.
+    flags = getattr(info, "filling_mode", 0)
+    execution_mode = getattr(info, "trade_exemode", None)
+    market_exec = getattr(mt5, "SYMBOL_TRADE_EXECUTION_MARKET", 2)
+    if flags & getattr(mt5, "SYMBOL_FILLING_IOC", 2):
+        filling = _mt5_constant(mt5, "ORDER_FILLING_IOC")
+    elif flags & getattr(mt5, "SYMBOL_FILLING_FOK", 1):
+        filling = _mt5_constant(mt5, "ORDER_FILLING_FOK")
+    elif execution_mode != market_exec:
+        filling = _mt5_constant(mt5, "ORDER_FILLING_RETURN")
+    else:
+        raise ExecutionBlocked("Símbolo não declara modo de preenchimento suportado")
     request = {
         "action": _mt5_constant(mt5, "TRADE_ACTION_DEAL"),
         "symbol": order.symbol,
@@ -155,12 +166,11 @@ def send_manual_order(mt5, order: ManualOrder, confirmation: str, *, live_opt_in
         "comment": "Nexus manual confirmed",
         "type_time": _mt5_constant(mt5, "ORDER_TIME_GTC"),
     }
-    if filling is not None:
-        request["type_filling"] = filling
+    request["type_filling"] = filling
     checked = mt5.order_check(request)
-    if checked is None or getattr(checked, "retcode", None) not in {
-        getattr(mt5, "TRADE_RETCODE_DONE", 10009), getattr(mt5, "TRADE_RETCODE_PLACED", 10008)
-    }:
+    # MqlTradeCheckResult.retcode == 0 indica validação bem-sucedida;
+    # DONE/PLACED são retcodes de order_send, não de order_check.
+    if checked is None or getattr(checked, "retcode", None) != 0:
         raise ExecutionBlocked(f"MT5 order_check rejeitou a ordem: {getattr(checked, 'comment', mt5.last_error())}")
 
     # Uma única submissão; nunca repetir automaticamente em caso de resposta incerta.

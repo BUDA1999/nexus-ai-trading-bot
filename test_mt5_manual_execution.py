@@ -6,11 +6,13 @@ class FakeMT5:
     ACCOUNT_TRADE_MODE_DEMO = 0; ACCOUNT_TRADE_MODE_REAL = 2
     ORDER_TYPE_BUY = 0; ORDER_TYPE_SELL = 1; TRADE_ACTION_DEAL = 1; ORDER_TIME_GTC = 0
     TRADE_RETCODE_DONE = 10009; TRADE_RETCODE_PLACED = 10008
+    ORDER_FILLING_FOK = 0; ORDER_FILLING_IOC = 1; ORDER_FILLING_RETURN = 2
+    SYMBOL_FILLING_FOK = 1; SYMBOL_FILLING_IOC = 2; SYMBOL_TRADE_EXECUTION_MARKET = 2
     def __init__(self, mode=0, pnl=-10):
         self.account = NS(trade_mode=mode, equity=10000, trade_allowed=True)
         self.terminal = NS(connected=True, trade_allowed=True)
         self.info = NS(visible=True, trade_allowed=True, point=.00001, volume_min=.01,
-                       volume_max=10, volume_step=.01, trade_stops_level=0, filling_mode=1)
+                       volume_max=10, volume_step=.01, trade_stops_level=0, filling_mode=1, trade_exemode=2)
         self.tick = NS(bid=1.10000, ask=1.10010)
         self.pnl = pnl; self.sent=[]
     def terminal_info(self): return self.terminal
@@ -20,7 +22,7 @@ class FakeMT5:
     def symbol_select(self, *_): return True
     def positions_get(self, **_): return []
     def order_calc_profit(self, *_): return self.pnl
-    def order_check(self, _): return NS(retcode=self.TRADE_RETCODE_DONE, comment="ok")
+    def order_check(self, _): return NS(retcode=0, comment="ok")
     def order_send(self, req): self.sent.append(req); return NS(retcode=self.TRADE_RETCODE_DONE, order=123)
     def last_error(self): return "fake"
 
@@ -46,6 +48,7 @@ class ExecutionTests(unittest.TestCase):
         mt=FakeMT5(); mt.positions_get=lambda **_: [object()]
         with self.assertRaises(ExecutionBlocked): send_manual_order(mt,self.order,required_confirmation(self.order,False))
         self.assertEqual(mt.sent,[])
+
     def test_terminal_algo_trading_disabled_blocks(self):
         mt=FakeMT5(); mt.terminal.trade_allowed=False
         with self.assertRaises(ExecutionBlocked): send_manual_order(mt,self.order,required_confirmation(self.order,False))
