@@ -8,6 +8,8 @@ class FakeMT5:
     TRADE_RETCODE_DONE = 10009; TRADE_RETCODE_PLACED = 10008
     ORDER_FILLING_FOK = 0; ORDER_FILLING_IOC = 1; ORDER_FILLING_RETURN = 2
     SYMBOL_FILLING_FOK = 1; SYMBOL_FILLING_IOC = 2; SYMBOL_TRADE_EXECUTION_MARKET = 2
+    ORDER_FILLING_FOK = 0; ORDER_FILLING_IOC = 1; ORDER_FILLING_RETURN = 2
+    SYMBOL_FILLING_FOK = 1; SYMBOL_FILLING_IOC = 2; SYMBOL_TRADE_EXECUTION_MARKET = 2
     def __init__(self, mode=0, pnl=-10):
         self.account = NS(trade_mode=mode, equity=10000, trade_allowed=True)
         self.terminal = NS(connected=True, trade_allowed=True)
@@ -21,6 +23,8 @@ class FakeMT5:
     def symbol_info_tick(self, _): return self.tick
     def symbol_select(self, *_): return True
     def positions_get(self, **_): return []
+    def orders_get(self, **_): return []
+    def orders_get(self, **_): return []
     def order_calc_profit(self, *_): return self.pnl
     def order_check(self, _): return NS(retcode=0, comment="ok")
     def order_send(self, req): self.sent.append(req); return NS(retcode=self.TRADE_RETCODE_DONE, order=123)
@@ -51,6 +55,14 @@ class ExecutionTests(unittest.TestCase):
 
     def test_terminal_algo_trading_disabled_blocks(self):
         mt=FakeMT5(); mt.terminal.trade_allowed=False
+        with self.assertRaises(ExecutionBlocked): send_manual_order(mt,self.order,required_confirmation(self.order,False))
+        self.assertEqual(mt.sent,[])
+    def test_pending_order_blocks_duplicate(self):
+        mt=FakeMT5(); mt.orders_get=lambda **_: [object()]
+        with self.assertRaises(ExecutionBlocked): send_manual_order(mt,self.order,required_confirmation(self.order,False))
+        self.assertEqual(mt.sent,[])
+    def test_pending_order_blocks_duplicate(self):
+        mt=FakeMT5(); mt.orders_get=lambda **_: [object()]
         with self.assertRaises(ExecutionBlocked): send_manual_order(mt,self.order,required_confirmation(self.order,False))
         self.assertEqual(mt.sent,[])
 

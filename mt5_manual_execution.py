@@ -101,7 +101,10 @@ def send_manual_order(mt5, order: ManualOrder, confirmation: str, *, live_opt_in
     tick = mt5.symbol_info_tick(order.symbol)
     if tick is None or tick.bid <= 0 or tick.ask < tick.bid:
         raise ExecutionBlocked("Cotação inválida ou indisponível")
-    spread_points = (tick.ask - tick.bid) / info.point
+    point = getattr(info, "point", 0.0)
+    if not isinstance(point, (int, float)) or not isfinite(point) or point <= 0:
+        raise ExecutionBlocked("Point size inválido para o símbolo")
+    spread_points = (tick.ask - tick.bid) / point
     if spread_points > order.max_spread_points:
         raise ExecutionBlocked(f"Spread {spread_points:.1f} points excede limite {order.max_spread_points}")
 
@@ -127,6 +130,12 @@ def send_manual_order(mt5, order: ManualOrder, confirmation: str, *, live_opt_in
         raise ExecutionBlocked(f"Não foi possível verificar posições abertas: {mt5.last_error()}")
     if positions:
         raise ExecutionBlocked("Já há posição aberta neste símbolo; bloqueio anti-duplicação")
+    if hasattr(mt5, "orders_get"):
+        pending_orders = mt5.orders_get(symbol=order.symbol)
+        if pending_orders is None:
+            raise ExecutionBlocked(f"Não foi possível verificar ordens pendentes: {mt5.last_error()}")
+        if pending_orders:
+            raise ExecutionBlocked("Já há ordem pendente neste símbolo; bloqueio anti-duplicação")
 
     order_type = _mt5_constant(mt5, "ORDER_TYPE_BUY" if side == "BUY" else "ORDER_TYPE_SELL")
     pnl_at_stop = mt5.order_calc_profit(order_type, order.symbol, order.volume, entry, order.stop_loss)

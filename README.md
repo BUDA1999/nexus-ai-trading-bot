@@ -2,8 +2,10 @@
 
 Protótipo modular educativo com sinais, filtros de risco, IA consultiva local e ferramentas de pesquisa para MT5. Inclui envio manual com salvaguardas; **não é aconselhamento financeiro e não garante lucro nem segurança**.
 
+**Criador:** JD (Jadson)
+
 ## Execução manual MT5
-`mt5_manual_execution.py` aceita uma ordem market introduzida pelo utilizador, com BUY/SELL, volume, stop-loss e take-profit obrigatórios. Verifica terminal ligado, negociação permitida, símbolo, spread, distância mínima SL/TP, posição duplicada, volume, perda estimada pelo MT5, modo de preenchimento e `order_check`. Submete uma só vez e não repete automaticamente se a resposta ficar incerta. IA e YOLO nunca chamam este módulo.
+`mt5_manual_execution.py` aceita uma ordem market introduzida pelo utilizador, com BUY/SELL, volume, stop-loss e take-profit obrigatórios. Verifica terminal ligado, negociação permitida, símbolo e cotação, spread, distância mínima SL/TP, posição/ordem pendente duplicada, volume, perda estimada pelo MT5, modo de preenchimento e `order_check`. Submete uma só vez e não repete automaticamente se a resposta ficar incerta. IA e YOLO nunca chamam este módulo.
 
 **Começar apenas numa conta DEMO XM/MT5 num PC Windows.** A integração não foi testada no terminal XM. A conta REAL está bloqueada por padrão; o desbloqueio exige opt-in `NEXUS_ENABLE_LIVE_TRADING=I_ACCEPT_REAL_MONEY_RISK` e confirmação textual exata para cada ordem. Limite de risco do código: máximo 0,50% da equity por ordem (padrão 0,25%). Estes limites não garantem segurança ou execução correta. Não testar com dinheiro real.
 
