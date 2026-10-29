@@ -46,7 +46,6 @@ class ExecutionTests(unittest.TestCase):
         mt=FakeMT5(); mt.positions_get=lambda **_: [object()]
         with self.assertRaises(ExecutionBlocked): send_manual_order(mt,self.order,required_confirmation(self.order,False))
         self.assertEqual(mt.sent,[])
-
     def test_terminal_algo_trading_disabled_blocks(self):
         mt=FakeMT5(); mt.terminal.trade_allowed=False
         with self.assertRaises(ExecutionBlocked): send_manual_order(mt,self.order,required_confirmation(self.order,False))
