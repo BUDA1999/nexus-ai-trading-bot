@@ -66,6 +66,11 @@ def send_manual_order(mt5, order: ManualOrder, confirmation: str, *, live_opt_in
     account = mt5.account_info()
     if account is None:
         raise ExecutionBlocked(f"Sem sessão/conta MT5: {mt5.last_error()}")
+    terminal = mt5.terminal_info() if hasattr(mt5, "terminal_info") else None
+    if terminal is None or not getattr(terminal, "connected", False):
+        raise ExecutionBlocked("Terminal MT5 sem ligação confirmada")
+    if not getattr(terminal, "trade_allowed", False) or not getattr(account, "trade_allowed", False):
+        raise ExecutionBlocked("Algo trading não está explicitamente permitido no terminal/conta")
     demo_mode = _mt5_constant(mt5, "ACCOUNT_TRADE_MODE_DEMO")
     real_mode = _mt5_constant(mt5, "ACCOUNT_TRADE_MODE_REAL")
     mode = getattr(account, "trade_mode", None)
@@ -128,6 +133,8 @@ def send_manual_order(mt5, order: ManualOrder, confirmation: str, *, live_opt_in
     equity = getattr(account, "equity", 0.0)
     if pnl_at_stop is None or not isfinite(pnl_at_stop) or equity <= 0:
         raise ExecutionBlocked("MT5 não conseguiu estimar perda até ao stop")
+    if pnl_at_stop >= 0:
+        raise ExecutionBlocked("O nível indicado não representa perda segundo o cálculo MT5; ordem bloqueada")
     risk_cash = abs(pnl_at_stop)
     risk_percent = risk_cash / equity * 100
     if risk_percent > order.risk_percent_limit:

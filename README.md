@@ -1,41 +1,24 @@
 # Nexus AI Trading Bot
 
-Protótipo modular de estudo para sinais visuais + contexto numérico MT5, filtros de risco, monitorização local e pesquisa de estratégias. **Não envia ordens. Não é aconselhamento financeiro.**
+Protótipo modular de estudo: sinais, filtros de risco, IA consultiva e ferramentas para MT5. Inclui envio manual com salvaguardas; **não é aconselhamento financeiro, não garante lucro e não automatiza a decisão da IA**.
 
-## Módulos
-
-- `trading_bot/core.py`: EMA, ATR, filtro direcional, stop/alvo ATR e dimensionamento com limite de risco.
-- `trading_bot/strategies.py`: interface de estratégias, filtro visão+tendência e níveis de grelha para pesquisa (não ordens).
-- `trading_bot/ai_review.py`: contrato de revisão segura, atualmente sem IA externa nem execução.
-- `trading_bot/monitoring.py`: auditoria local JSONL e resumo de resultados.
-- `trading_bot/research/options.py`: preço teórico Black-Scholes para estudo europeu, sem corretora nem ordens.
-- `trading_bot/adapters/mt5_readonly.py`: adaptador MT5 opcional, apenas leitura de candles fechados.
-- `trading_bot/backtest.py`: backtest offline com sinais/tendências fornecidos num CSV.
+## Ficheiros
+`core.py` e `backtest.py`: indicadores e backtest CSV. `ai_ollama.py`: comentário de sinais usando Ollama local. `strategies.py`: filtro de sinal e níveis de grelha apenas para pesquisa. `monitoring.py`: auditoria local. `options_research.py`: fórmula educativa de Black-Scholes. `mt5_readonly.py`: leitura de candles. `mt5_manual_execution.py`: envio de uma ordem market manual confirmada no MT5.
 
 ## Plataforma
+Usar um **PC Windows** com terminal MetaTrader 5 (por exemplo XM demo). Android pode ser painel de observação/alertas no futuro; não executa diretamente o terminal MT5 desktop. IA fica local via Ollama.
 
-Começar localmente num **PC Windows**: a integração Python oficial do MT5 depende do terminal MetaTrader 5 desktop. O scanner visual também captura a tela. Android pode ser acrescentado depois como painel de consulta/alertas; não deve executar o terminal MT5 desktop nem guardar credenciais de trading.
-
-## Testar
-
-Python 3.10+ para núcleo; nenhum pacote externo para testes do núcleo.
+## Testes
+Python 3.10+; os testes não precisam de ligação ao broker:
 
 ```bash
-python -m unittest discover -s tests -v
-python -m trading_bot.backtest data/sample_signals.csv --balance 10000 --risk 0.005
+python -m unittest discover -s . -p 'test_*.py' -v
+python backtest.py sample_signals.csv --balance 10000 --risk 0.005
 ```
 
-A ligação MT5 é opcional e requer Windows, terminal aberto e pacote MetaTrader5 instalado; `read_closed_rates` é apenas leitura. Não há API de execução de ordens neste projeto.
+## Envio manual MT5 — risco real
+O script exige BUY/SELL explícito, volume, SL, TP, sessão MT5 ligada, negociação permitida, spread limitado, sem posição existente no símbolo, volume válido, verificação `order_check` e confirmação digitada por ordem. Faz apenas uma submissão, sem retry automático. IA/YOLO **não** chamam o módulo.
 
-## Limitações e plano seguro
+**Começa em demo XM; o envio não foi verificado no terminal XM. Conta real está bloqueada por padrão**, mas existe opt-in explícito `NEXUS_ENABLE_LIVE_TRADING=I_ACCEPT_REAL_MONEY_RISK` e confirmação escrita separada por ordem. Teto no código: 0,50% da equity por ordem; padrão 0,25%. Essas travas não garantem segurança, preço, execução, nem resultado. Nunca testar a conta real nesta fase.
 
-Backtests podem omitir spread variável, slippage, comissões, swap, gaps, execução parcial e conversão de moedas. Os dados e resultados de exemplo não representam desempenho. Validar em histórico fora da amostra, comparar com baseline OHLC, testar conta demo e colocar limites de paragem antes de sequer considerar qualquer execução.
-
-Análise das referências, licenças e razão de separar MT5, grid e opções em [REFERENCIAS.md](REFERENCIAS.md).
-
-
-## Envio manual MT5 — avançado
-
-O script `mt5_manual_execution.py` aceita apenas ordem market indicada pelo utilizador, com SL/TP obrigatórios, valida símbolo, spread, posição duplicada, volume e perda estimada pelo terminal. Faz `order_check` e envia uma vez, sem repetição automática. A IA e o detector visual não o chamam. Começa exclusivamente com a conta DEMO da XM.
-
-Conta REAL fica bloqueada por padrão. O código exige opt-in `NEXUS_ENABLE_LIVE_TRADING=I_ACCEPT_REAL_MONEY_RISK` **e** confirmação exata escrita para cada operação; limite máximo por ordem no programa: 0,50% de equity (padrão 0,25%). Isso não torna uma estratégia segura nem constitui recomendação de negociação. O utilizador continua responsável por confirmar os detalhes e verificar o terminal. O módulo não foi testado contra broker real.
+Backtests não incluem todos os custos e não provam vantagem. Não colocar senhas ou tokens no repositório.
