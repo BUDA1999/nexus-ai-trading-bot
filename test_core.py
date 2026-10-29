@@ -1,5 +1,5 @@
 import unittest
-from trading_bot.core import Candle, atr, classify_trend, ema, filter_signal, position_size
+from core import Candle, atr, classify_trend, ema, filter_signal, position_size
 
 class CoreTests(unittest.TestCase):
     def test_ema_seed_and_values(self):
